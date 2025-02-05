@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: ./sso
+    container_name: sso
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_HOST=db # Имя сервиса Postgres в сети Docker
+    restart: unless-stopped
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17.2-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    ports:
+      - '${POSTGRES_PORT}:5432'
+    volumes:
+      - /volume_db/:/var/lib/postgresql/data
