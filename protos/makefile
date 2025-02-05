@@ -1,5 +1,5 @@
-PROTO_PATH := $(CURDIR)/protos/SSO
-PKG_PROTO_PATH := $(CURDIR)/sso/pkg
+PROTO_PATH := $(CURDIR)/proto
+PKG_PROTO_PATH := $(CURDIR)/
 PROTOC := protoc
 
 # Файл сгенерированного кода
