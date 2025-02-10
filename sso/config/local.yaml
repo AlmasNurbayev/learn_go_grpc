@@ -1,7 +1,6 @@
 env: 'local'
 token_ttl: 1h
 #TODO: password for postgres move to env
-dsn: 'postgres://postgres:postgres@localhost:5437/sso?sslmode=disable'
 grpc:
   port: 44044
   timeout: 5s

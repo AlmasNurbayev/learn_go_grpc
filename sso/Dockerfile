@@ -1,17 +1,25 @@
 # Используем официальный образ Go
-FROM golang:1.23
-
+FROM golang:1.23-alpine AS builder
 # Устанавливаем рабочую директорию в контейнере
 WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
 
 # Копируем файлы проекта
 COPY . .
 
-# Загружаем зависимости
-RUN go mod tidy
-
 # Собираем приложение
 RUN go build -o SSO ./cmd/sso/main.go
+
+
+# Используем stage 2: минимальный контейнер
+FROM alpine:latest
+WORKDIR /root/
+
+# Копируем только бинарник из builder-образа
+COPY --from=builder /app/config ./config
+COPY --from=builder /app/SSO .
 
 # Запускаем приложение
 CMD ["./SSO"]

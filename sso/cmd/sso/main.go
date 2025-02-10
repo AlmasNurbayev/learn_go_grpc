@@ -1,26 +1,38 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
+	"sso/internal/app"
 	"sso/internal/config"
-	"strconv"
+	"sso/internal/lib/logger"
+	"sso/internal/utils"
 	"syscall"
 )
 
 func main() {
 	cfg := config.MustLoad()
-	fmt.Println("sso")
-	fmt.Println(cfg)
+	Log := logger.InitLogger(cfg.Env)
+	p, err := utils.PrintAsJSON(cfg)
+	if err != nil {
+		panic(err)
+	}
+	Log.Info("load config: ")
+	Log.Info(string(*p))
 
+	application := app.NewApp(Log, cfg.GRPC.Port, cfg.DSN, cfg.TokenTTL)
+
+	go func() {
+		application.GRPCServer.MustRun()
+	}()
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		fmt.Println("go")
-	}()
-	fmt.Println("starting server on " + strconv.Itoa(cfg.GRPC.Port))
-	<-done
-	fmt.Println("stopping server on " + strconv.Itoa(cfg.GRPC.Port))
+	signalString := <-done
+	Log.Info("received signal " + signalString.String())
+
+	application.GRPCServer.Stop()
+
+	Log.Info("server stopped")
+
 }
