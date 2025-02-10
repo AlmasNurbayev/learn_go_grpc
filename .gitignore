@@ -1,4 +1,4 @@
 .env
 sso/.env
 /volume_db
-/.vscode
+/.vscode/
