@@ -8,8 +8,9 @@ import (
 )
 
 type Storage struct {
-	db *sqlx.DB
-	tx *sqlx.Tx
+	db  *sqlx.DB
+	tx  *sqlx.Tx
+	log *slog.Logger
 }
 
 func NewStorage(DSN string, log *slog.Logger) (*Storage, error) {
@@ -27,5 +28,5 @@ func NewStorage(DSN string, log *slog.Logger) (*Storage, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &Storage{db: db, tx: tx}, nil
+	return &Storage{db: db, tx: tx, log: log}, nil
 }

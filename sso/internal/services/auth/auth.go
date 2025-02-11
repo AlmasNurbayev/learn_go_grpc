@@ -15,19 +15,19 @@ import (
 )
 
 type AuthService struct {
-	log         *slog.Logger
-	storage     AuthStorage
-	tokenTTL    time.Duration
-	appProvider AppProvider
+	log      *slog.Logger
+	storage  AuthStorage
+	tokenTTL time.Duration
 }
 
 type AuthStorage interface {
-	SaveUser(ctx context.Context, email string, phone string, passHash []byte) (id int64, err error)
+	SaveUser(ctx context.Context, email string, phone string, passHash []byte, idRole int) (id int64, err error)
 	GetUserByPhone(ctx context.Context, phone string) (user models.User, err error)
 	GetUserByEmail(ctx context.Context, email string) (user models.User, err error)
 	GetUserById(ctx context.Context, id int64) (user models.User, err error)
 	IsAdmin(ctx context.Context, id int64) (isAdmin bool, err error)
 	GetAppById(ctx context.Context, id int) (app models.App, err error)
+	GetRoleByName(ctx context.Context, name string) (id int, err error)
 }
 
 type AppProvider interface {
@@ -124,7 +124,18 @@ func (a *AuthService) RegisterNewUser(ctx context.Context, email string, phone s
 			Value: slog.StringValue(err.Error())})
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
-	id, err := a.storage.SaveUser(ctx, email, phone, passwordHash)
+
+	idRole, err := a.storage.GetRoleByName(ctx, "user")
+	if err != nil {
+		if errors.Is(err, storage.ErrRoleNotFound) {
+			log.Warn("not found role for user")
+			return 0, fmt.Errorf("%s: %w", op, storage.ErrRoleNotFound)
+		}
+		log.Error("failed to save user - not found role", logger.Err(err))
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	id, err := a.storage.SaveUser(ctx, email, phone, passwordHash, idRole)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Warn("user already exists", slog.String("email", email))

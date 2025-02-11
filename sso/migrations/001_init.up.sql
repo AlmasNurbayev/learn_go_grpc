@@ -22,3 +22,4 @@ CREATE TABLE apps (
 
 INSERT INTO roles (name) VALUES ('admin');
 INSERT INTO roles (name) VALUES ('user');
+INSERT INTO apps (name, secret) VALUES ('web', 'web_secret');
