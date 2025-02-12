@@ -10,7 +10,7 @@ import (
 
 func (s *Storage) GetAppById(ctx context.Context, id int) (app models.App, err error) {
 	query := `SELECT id, name, secret FROM apps WHERE id = $1`
-	err = s.db.GetContext(ctx, &app, query, id)
+	err = s.db.QueryRow(ctx, query, id).Scan(&app.Id, &app.Name, &app.Secret)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return app, storage.ErrAppNotFound
