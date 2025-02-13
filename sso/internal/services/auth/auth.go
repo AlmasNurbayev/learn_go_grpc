@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sso/internal/grpc/middleware"
 	"sso/internal/lib/jwt"
 	"sso/internal/lib/logger"
 	"sso/internal/models"
@@ -49,6 +50,8 @@ func NewService(log *slog.Logger, storage AuthStorage, tokenTTL time.Duration) *
 
 func (a *AuthService) Login(ctx context.Context, login string,
 	typeLogin string, password string, appId int) (string, error) {
+	fmt.Println("service", ctx.Value(middleware.TraceIDKey))
+
 	const op = "auth.Login"
 	log := a.log.With(slog.String("op", op))
 
@@ -105,7 +108,7 @@ func (a *AuthService) Login(ctx context.Context, login string,
 		log.Error("failed to generate token", logger.Err(err))
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
-	log.Info("token generated for user.id", slog.Int64("id", user.Id))
+	//log.Info("token generated for user.id", slog.Int64("id", user.Id))
 
 	return token, nil
 }

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"log/slog"
 	grpcapp "sso/internal/app/grpc"
 	"sso/internal/services/auth"
@@ -14,10 +13,11 @@ type App struct {
 	PostrgresStorage *postgres.Storage
 }
 
-func NewApp(ctx context.Context, log *slog.Logger, port int, storagePath string, tokenTTL time.Duration) *App {
+func NewApp(log *slog.Logger, port int, storagePath string, tokenTTL time.Duration,
+	timeout time.Duration) *App {
 	// init storage
 
-	postgresStorage, err := postgres.NewStorage(ctx, storagePath, log)
+	postgresStorage, err := postgres.NewStorage(storagePath, log, timeout)
 	if err != nil {
 		panic(err)
 	}
@@ -25,7 +25,7 @@ func NewApp(ctx context.Context, log *slog.Logger, port int, storagePath string,
 	authService := auth.NewService(log, postgresStorage, tokenTTL)
 
 	//
-	grpcApp := grpcapp.NewApp(log, port, authService)
+	grpcApp := grpcapp.NewApp(log, port, authService, timeout)
 
 	return &App{
 		GRPCServer:       grpcApp,

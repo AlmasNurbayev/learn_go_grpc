@@ -5,7 +5,9 @@ import (
 	"log/slog"
 	"net"
 	authgrpc "sso/internal/grpc/auth"
+	"sso/internal/grpc/middleware"
 	"sso/internal/services/auth"
+	"time"
 
 	"google.golang.org/grpc"
 )
@@ -14,20 +16,24 @@ type App struct {
 	log        *slog.Logger
 	gRPCServer *grpc.Server
 	port       int
+	timeout    time.Duration
 }
 
 func NewApp(
 	log *slog.Logger,
 	port int,
 	authService *auth.AuthService,
+	timeout time.Duration,
+
 ) *App {
-	gRPCServer := grpc.NewServer()
-	authgrpc.Register(gRPCServer, authService)
+	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(middleware.ContextMiddleware(timeout, log)))
+	authgrpc.Register(gRPCServer, authService, log)
 
 	return &App{
 		log:        log,
 		gRPCServer: gRPCServer,
 		port:       port,
+		timeout:    timeout,
 	}
 }
 

@@ -4,16 +4,21 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Storage struct {
+	ctx context.Context
 	db  *pgxpool.Pool
 	log *slog.Logger
 }
 
-func NewStorage(ctx context.Context, DSN string, log *slog.Logger) (*Storage, error) {
+func NewStorage(DSN string, log *slog.Logger, timeout time.Duration) (*Storage, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
 	const op = "postgres.NewStorage"
 	log.With(slog.String("op", op)).Info("init storage " + DSN)
 
@@ -29,7 +34,7 @@ func NewStorage(ctx context.Context, DSN string, log *slog.Logger) (*Storage, er
 	// 	return nil, fmt.Errorf("%s: %w", op, err)
 	// }
 
-	return &Storage{db: db, log: log}, nil
+	return &Storage{ctx: ctx, db: db, log: log}, nil
 }
 
 func (s *Storage) Close() {

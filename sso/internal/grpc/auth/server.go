@@ -3,6 +3,9 @@ package authGrpc
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
+	"sso/internal/grpc/middleware"
 	"sso/internal/services/auth"
 	"sso/internal/storage"
 
@@ -15,10 +18,11 @@ import (
 type serverAPI struct {
 	ssov1.UnimplementedAuthServer
 	auth auth.AuthService
+	log  *slog.Logger
 }
 
-func Register(gRPC *grpc.Server, authService *auth.AuthService) {
-	ssov1.RegisterAuthServer(gRPC, &serverAPI{auth: *authService})
+func Register(gRPC *grpc.Server, authService *auth.AuthService, log *slog.Logger) {
+	ssov1.RegisterAuthServer(gRPC, &serverAPI{auth: *authService, log: log})
 }
 
 func (s *serverAPI) Login(ctx context.Context, data *ssov1.LoginRequest) (*ssov1.LoginResponse, error) {
@@ -28,6 +32,9 @@ func (s *serverAPI) Login(ctx context.Context, data *ssov1.LoginRequest) (*ssov1
 		Type:     data.Type,
 		AppId:    data.AppId,
 	}
+
+	fmt.Println("handler", ctx.Value(middleware.TraceIDKey))
+
 	// TODO - условная валидация, если type = "email", то проверять что поле login является email
 	err := ValidateStruct(payload)
 	if err != nil {
@@ -54,6 +61,7 @@ func (s *serverAPI) Register(ctx context.Context, data *ssov1.RegisterRequest) (
 		Email:    data.Email,
 		Phone:    data.Phone,
 	}
+
 	err := ValidateStruct(payload)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -73,6 +81,7 @@ func (s *serverAPI) IsAdmin(ctx context.Context, data *ssov1.IsAdminRequest) (*s
 	payload := IsAdminForValidate{
 		UserId: data.UserId,
 	}
+
 	err := ValidateStruct(payload)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"sso/internal/grpc/middleware"
 	"sso/internal/models"
 	"sso/internal/storage"
 
@@ -40,7 +42,16 @@ func (s *Storage) GetUserByPhone(ctx context.Context, phone string) (user models
 	return user, nil
 }
 func (s *Storage) GetUserByEmail(ctx context.Context, email string) (user models.User, err error) {
-	query := `SELECT id, email, phone, pass_hash FROM users WHERE email = $1`
+
+	var temp string
+	err = s.db.QueryRow(ctx, "SELECT pg_sleep(18)").Scan(&temp)
+	if err != nil {
+		s.log.Error("canceled query DB", "error", err)
+		return user, err
+	}
+	fmt.Println("storage", ctx.Value(middleware.TraceIDKey))
+
+	query := `SELECT id, email, phone, pass_hash FROM users WHERE email = $1;`
 	err = s.db.QueryRow(ctx, query, email).Scan(&user.Id, &user.Email, &user.Phone, &user.PassHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
