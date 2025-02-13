@@ -13,11 +13,11 @@ type App struct {
 	PostrgresStorage *postgres.Storage
 }
 
-func NewApp(log *slog.Logger, port int, storagePath string, tokenTTL time.Duration,
+func NewApp(log *slog.Logger, port int, DSN string, tokenTTL time.Duration,
 	timeout time.Duration) *App {
 	// init storage
 
-	postgresStorage, err := postgres.NewStorage(storagePath, log, timeout)
+	postgresStorage, err := postgres.NewStorage(DSN, log, timeout)
 	if err != nil {
 		panic(err)
 	}

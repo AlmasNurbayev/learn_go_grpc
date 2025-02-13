@@ -19,7 +19,7 @@ func (s *Storage) SaveUser(ctx context.Context, email string, phone string, pass
 	phoneOrNil := sql.NullString{String: phone, Valid: phone != ""}
 	query := `INSERT INTO users (email, phone, pass_hash, role_id) VALUES ($1, $2, $3, $4) RETURNING id`
 
-	err = s.db.QueryRow(ctx, query, emailOrNil, phoneOrNil, passHash, idRole).Scan(&id)
+	err = s.db.QueryRowContext(ctx, query, emailOrNil, phoneOrNil, passHash, idRole).Scan(&id)
 	if err != nil {
 		if pqErr, ok := err.(*pgconn.PgError); ok {
 			if pqErr.Code == "23505" { // Код ошибки уникальности PostgreSQL
@@ -34,7 +34,7 @@ func (s *Storage) SaveUser(ctx context.Context, email string, phone string, pass
 
 func (s *Storage) GetUserByPhone(ctx context.Context, phone string) (user models.User, err error) {
 	query := `SELECT id, email, phone, pass_hash FROM users WHERE phone = $1`
-	err = s.db.QueryRow(ctx, query, phone).Scan(&user.Id, &user.Email, &user.Phone, &user.PassHash)
+	err = s.db.QueryRowContext(ctx, query, phone).Scan(&user.Id, &user.Email, &user.Phone, &user.PassHash)
 
 	if err != nil {
 		return user, err
@@ -43,16 +43,17 @@ func (s *Storage) GetUserByPhone(ctx context.Context, phone string) (user models
 }
 func (s *Storage) GetUserByEmail(ctx context.Context, email string) (user models.User, err error) {
 
-	var temp string
-	err = s.db.QueryRow(ctx, "SELECT pg_sleep(18)").Scan(&temp)
-	if err != nil {
-		s.log.Error("canceled query DB", "error", err)
-		return user, err
-	}
+	// искусственное замедление запроса
+	// var temp string
+	// err = s.db.QueryRow(ctx, "SELECT pg_sleep(18)").Scan(&temp)
+	// if err != nil {
+	// 	s.log.Error("canceled query DB", "error", err)
+	// 	return user, err
+	// }
 	fmt.Println("storage", ctx.Value(middleware.TraceIDKey))
 
 	query := `SELECT id, email, phone, pass_hash FROM users WHERE email = $1;`
-	err = s.db.QueryRow(ctx, query, email).Scan(&user.Id, &user.Email, &user.Phone, &user.PassHash)
+	err = s.db.QueryRowContext(ctx, query, email).Scan(&user.Id, &user.Email, &user.Phone, &user.PassHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return user, storage.ErrUserNotFound
@@ -71,7 +72,7 @@ func (s *Storage) IsAdmin(ctx context.Context, id int64) (isAdmin bool, err erro
 
 func (s *Storage) GetRoleByName(ctx context.Context, name string) (id int, err error) {
 	query := `SELECT id  FROM roles WHERE name = $1`
-	err = s.db.QueryRow(ctx, query, name).Scan(&id)
+	err = s.db.QueryRowContext(ctx, query, name).Scan(&id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, storage.ErrRoleNotFound

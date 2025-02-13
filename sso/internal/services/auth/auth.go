@@ -92,7 +92,7 @@ func (a *AuthService) Login(ctx context.Context, login string,
 			log.Warn("app not found", slog.Int("id", appId))
 			return "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
 		}
-		log.Error("failed to get user by phone", logger.Err(err))
+		log.Error("failed to get app", logger.Err(err))
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 

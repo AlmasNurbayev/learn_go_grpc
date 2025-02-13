@@ -17,9 +17,9 @@ RUN go build -o SSO ./cmd/sso/main.go
 FROM alpine:latest
 WORKDIR /root/
 
-# Копируем только бинарник из builder-образа
+# Копируем только бинарник и конфиги из builder-образа
 COPY --from=builder /app/config ./config
 COPY --from=builder /app/SSO .
 
 # Запускаем приложение
-CMD ["./SSO"]
+CMD ["./SSO", "-config=./config/local.yaml"]

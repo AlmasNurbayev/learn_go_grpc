@@ -6,27 +6,31 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
 type Storage struct {
 	ctx context.Context
-	db  *pgxpool.Pool
+	db  *sqlx.DB
 	log *slog.Logger
 }
 
 func NewStorage(DSN string, log *slog.Logger, timeout time.Duration) (*Storage, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-
 	const op = "postgres.NewStorage"
 	log.With(slog.String("op", op)).Info("init storage " + DSN)
 
-	db, err := pgxpool.New(ctx, DSN)
+	db, err := sqlx.Connect("pgx", DSN)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	db.Config().MaxConns = 10 // Максимальное количество простаивающих соединений
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	db.SetMaxIdleConns(5)  // Максимальное количество соединений
+	db.SetMaxOpenConns(10) // Максимальное количество соединений
 
 	// создание транзакции отключено, так как вызывает зависание при Close()
 	// tx, err := db.Begin(ctx)
@@ -42,7 +46,7 @@ func (s *Storage) Close() {
 	s.log.With(slog.String("op", op))
 
 	if s.db != nil {
-		s.log.Info("active Postgres conns", slog.Any("acquired_conns", s.db.Stat().AcquiredConns()))
+		s.log.Info("active Postgres conns", slog.Any("acquired_conns", s.db.Stats().OpenConnections))
 		//s.tx.Rollback(context.Background())
 		s.db.Close()
 		s.log.Warn("DB connection closed")
