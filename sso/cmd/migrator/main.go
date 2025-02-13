@@ -14,7 +14,7 @@ import (
 func main() {
 	var DSN, migrationsPath, migrationTable, typeTask string
 
-	flag.StringVar(&DSN, "dsn", "postgres://postgres:postgres@localhost:5435/sso_db?sslmode=disable", "Database DSN")
+	flag.StringVar(&DSN, "dsn", "", "Database DSN")
 	flag.StringVar(&migrationsPath, "migrationsPath", "file://migrations", "Path to migrations")
 	flag.StringVar(&migrationTable, "migrationTable", "migrations", "Migration table name")
 	flag.StringVar(&typeTask, "typeTask", "up", "what you want - up or down")

@@ -10,11 +10,11 @@ import (
 func GenerateToken(user models.User, app models.App, ttl time.Duration) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"email": user.Email,
-		"phone": user.Phone,
-		"exp":   time.Now().Add(ttl).Unix(),
-		"app":   app.Id,
+		"id":     user.Id,
+		"email":  user.Email.String,
+		"phone":  user.Phone.String,
+		"exp":    time.Now().Add(ttl).Unix(),
+		"app_id": app.Id,
 	})
 
 	tokenString, err := token.SignedString([]byte(app.Secret))
