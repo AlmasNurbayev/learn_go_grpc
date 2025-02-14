@@ -30,7 +30,7 @@ jobs:
       # 5. Получаем версию из тега
       - name: Extract tag version
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
         shell: bash
 
       # 5. Собираем и пушим Docker-образ
