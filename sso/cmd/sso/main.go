@@ -12,8 +12,8 @@ import (
 )
 
 func main() {
-	s := fmt.Sprintf("%s", "фывфыв")
-	fmt.Println(s)
+	sd := fmt.Sprintf("%s", "фывфыв")
+	fmt.Println(sd)
 
 	cfg := config.MustLoad()
 	Log := logger.InitLogger(cfg.Env)
