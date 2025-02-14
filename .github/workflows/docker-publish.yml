@@ -41,5 +41,5 @@ jobs:
           file: ./sso/Dockerfile # Укажите путь, если Dockerfile в другом месте
           push: true
           tags: |
-            AlmasNurbayev/learn_go_grpc_sso:latest
-            AlmasNurbayev/learn_go_grpc_sso:${{ env.VERSION }}
+            almasnurbayev/learn_go_grpc_sso:latest
+            almasnurbayev/learn_go_grpc_sso:${{ env.VERSION }}
