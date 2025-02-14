@@ -3,10 +3,8 @@ package authGrpc
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"sso/internal/errorsPackage"
-	"sso/internal/grpc/middleware"
 	"sso/internal/services/auth"
 
 	ssov1 "github.com/AlmasNurbayev/learn_go_grpc_protos/generated/sso"
@@ -33,7 +31,7 @@ func (s *serverAPI) Login(ctx context.Context, data *ssov1.LoginRequest) (*ssov1
 		AppId:    data.AppId,
 	}
 
-	fmt.Println("handler", ctx.Value(middleware.TraceIDKey))
+	//fmt.Println("handler", ctx.Value(middleware.TraceIDKey))
 
 	// TODO - условная валидация, если type = "email", то проверять что поле login является email
 	err := ValidateStruct(payload)
@@ -90,9 +88,14 @@ func (s *serverAPI) IsAdmin(ctx context.Context, data *ssov1.IsAdminRequest) (*s
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if data.UserId == 10 {
-		return &ssov1.IsAdminResponse{IsAdmin: true}, nil
-	} else {
-		return &ssov1.IsAdminResponse{IsAdmin: false}, nil
+	isAdmin, err := s.auth.IsAdmin(ctx, data.UserId)
+	if err != nil {
+		if errors.Is(err, errorsPackage.ErrUserNotFound) {
+			return nil, status.Error(codes.NotFound, errorsPackage.ErrUserNotFound.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
 	}
+
+	return &ssov1.IsAdminResponse{IsAdmin: isAdmin}, nil
+
 }

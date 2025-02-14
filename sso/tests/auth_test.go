@@ -22,6 +22,7 @@ const (
 )
 
 var loginTime time.Time
+var loggedId int64
 
 func TestAuth_RegistrationLogin_Positive(t *testing.T) {
 	ctx, st := suite.New(t)
@@ -81,11 +82,24 @@ func TestAuth_RegistrationLogin_Positive(t *testing.T) {
 		require.NoError(t, err)
 
 		claims, ok := tokenParsed.Claims.(jwt.MapClaims)
+		loggedId = int64(claims["id"].(float64))
+
 		assert.True(t, ok)
 		assert.Equal(t, respRegistration.GetUserId(), int64(claims["id"].(float64)))
 		assert.Equal(t, email, claims["email"].(string))
 		assert.Equal(t, AppId, int(claims["app_id"].(float64)))
 		assert.InDelta(t, loginTime.Add(st.Cfg.TokenTTL).Unix(), int64(claims["exp"].(float64)), 2)
+	})
+
+	t.Run("IsAdmin", func(t *testing.T) {
+		var err error
+		t.Log(loggedId)
+		respIsAdmin, err := st.AuthClient.IsAdmin(ctx, &ssov1.IsAdminRequest{
+			UserId: loggedId,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, respIsAdmin.IsAdmin, false)
 	})
 }
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"sso/internal/errorsPackage"
-	"sso/internal/grpc/middleware"
 	"sso/internal/lib/jwt"
 	"sso/internal/lib/logger"
 	"sso/internal/models"
@@ -45,7 +44,7 @@ func NewService(log *slog.Logger, storage AuthStorage, tokenTTL time.Duration) *
 
 func (a *AuthService) Login(ctx context.Context, login string,
 	typeLogin string, password string, appId int) (string, error) {
-	fmt.Println("service", ctx.Value(middleware.TraceIDKey))
+	//fmt.Println("service", ctx.Value(middleware.TraceIDKey))
 
 	const op = "auth.Login"
 	log := a.log.With(slog.String("op", op))
@@ -156,12 +155,9 @@ func (a *AuthService) IsAdmin(ctx context.Context, id int64) (bool, error) {
 		if errors.Is(err, errorsPackage.ErrUserNotFound) {
 			log.Warn("user not found", slog.Int64("id", id))
 			return false, errorsPackage.ErrUserNotFound
-		} else if errors.Is(err, errorsPackage.ErrAppNotFound) {
-			log.Error("failed to get app by id", logger.Err(err))
-			return false, errorsPackage.ErrAppNotFound
 		} else {
-			log.Error("failed to get user by id", logger.Err(err))
-			return false, errorsPackage.ErrUserNotFound
+			log.Warn("failed to check IsAdmin", logger.Err(err))
+			return false, err
 		}
 	}
 	log.Info("user checked is admin ", slog.Int64("id ", id), slog.Bool("isAdmin ", isAdmin))
