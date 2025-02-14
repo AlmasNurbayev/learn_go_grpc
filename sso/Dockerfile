@@ -3,8 +3,8 @@ FROM golang:1.23-alpine AS builder
 # Устанавливаем рабочую директорию в контейнере
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download && go mod verify
+COPY go.mod ./
+RUN go mod download && go mod verify && go mod tidy
 
 # Копируем файлы проекта
 COPY . .
