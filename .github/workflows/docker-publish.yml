@@ -2,8 +2,6 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches:
-      - main # Можно изменить на нужную ветку
     tags:
       - v* # Публиковать образ при создании тега вида v1.0.0
 
