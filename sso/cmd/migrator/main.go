@@ -22,7 +22,6 @@ func main() {
 
 	dir, _ := os.Getwd()
 	fmt.Println("Текущая директория:", dir)
-	fmt.Println("DSN:", DSN)
 
 	m, err := migrate.New(migrationsPath, DSN)
 	if err != nil {

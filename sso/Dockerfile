@@ -11,15 +11,18 @@ COPY . .
 
 # Собираем приложение
 RUN go build -o SSO ./cmd/sso/main.go
+RUN go build -o MIGRATOR ./cmd/migrator/main.go
 
 
 # Используем stage 2: минимальный контейнер
 FROM alpine:latest
 WORKDIR /root/
 
-# Копируем только бинарник и конфиги из builder-образа
+# Копируем бинарники, миграции и конфиги из builder-образа
 COPY --from=builder /app/config ./config
+COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/SSO .
+COPY --from=builder /app/MIGRATOR .
 
 # Запускаем приложение
-CMD ["./SSO", "-config=./config/local.yaml"]
+CMD sh -c './MIGRATOR -typeTask up -dsn $DSN && ./SSO -config=./config/local.yaml'

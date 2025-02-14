@@ -2,6 +2,7 @@ services:
   app:
     build:
       context: ./sso
+      dockerfile: Dockerfile
     container_name: sso
     environment:
       - DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
