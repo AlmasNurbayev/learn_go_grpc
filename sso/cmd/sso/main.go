@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"sso/internal/app"
@@ -12,9 +11,6 @@ import (
 )
 
 func main() {
-	sd := fmt.Sprintf("%s", "фывфыв")
-	fmt.Println(sd)
-
 	cfg := config.MustLoad()
 	Log := logger.InitLogger(cfg.Env)
 	p, err := utils.PrintAsJSON(cfg)
