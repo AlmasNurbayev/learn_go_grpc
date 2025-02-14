@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# 1. установить линтер go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest 
+# 2. скопировать этот файл как .git/hooks/pre-push
+# 3. дать ему права на запуск chmod +x .git/hooks/pre-push
+# 4. убедиться, что папка Go-проекта в подпапке sso 
+
+cd sso || exit 1
+if ! golangci-lint run ./...
+then
+ echo "❌ Linting failed! Fix errors before pushing."
+ exit 1
+fi
+echo "✅ Linting passed. Proceeding with push..."
+exit 0
