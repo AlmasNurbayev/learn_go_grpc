@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"sso/internal/errorsPackage"
 	"sso/internal/models"
-	"sso/internal/storage"
 )
 
 func (s *Storage) GetAppById(ctx context.Context, id int) (app models.App, err error) {
@@ -13,7 +13,7 @@ func (s *Storage) GetAppById(ctx context.Context, id int) (app models.App, err e
 	err = s.db.QueryRowContext(ctx, query, id).Scan(&app.Id, &app.Name, &app.Secret)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return app, storage.ErrAppNotFound
+			return app, errorsPackage.ErrAppNotFound
 		}
 		return app, err
 	}

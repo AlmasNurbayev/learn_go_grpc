@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sso/internal/errorsPackage"
 	"sso/internal/grpc/middleware"
 	"sso/internal/services/auth"
-	"sso/internal/storage"
 
 	ssov1 "github.com/AlmasNurbayev/learn_go_grpc_protos/generated/sso"
 	"google.golang.org/grpc"
@@ -43,11 +43,14 @@ func (s *serverAPI) Login(ctx context.Context, data *ssov1.LoginRequest) (*ssov1
 
 	token, err := s.auth.Login(ctx, data.Login, data.Type, data.Password, int(data.AppId))
 	if err != nil {
-		if errors.Is(err, auth.ErrInvalidCredentials) {
-			return nil, status.Error(codes.InvalidArgument, "invalid email or password")
+		if errors.Is(err, errorsPackage.ErrUserNotFound) {
+			return nil, status.Error(codes.InvalidArgument, errorsPackage.ErrInvalidCredentials.Error())
 		}
-		if errors.Is(err, auth.ErrInvalidAppId) {
-			return nil, status.Error(codes.InvalidArgument, "invalid app id")
+		if errors.Is(err, errorsPackage.ErrInvalidCredentials) {
+			return nil, status.Error(codes.InvalidArgument, errorsPackage.ErrInvalidCredentials.Error())
+		}
+		if errors.Is(err, errorsPackage.ErrAppNotFound) {
+			return nil, status.Error(codes.InvalidArgument, errorsPackage.ErrAppNotFound.Error())
 		}
 		return nil, status.Error(codes.Internal, "failed to login")
 	}
@@ -68,8 +71,8 @@ func (s *serverAPI) Register(ctx context.Context, data *ssov1.RegisterRequest) (
 	}
 	userId, err := s.auth.RegisterNewUser(ctx, data.Email, data.Phone, data.Password)
 	if err != nil {
-		if errors.Is(err, storage.ErrUserExists) {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
+		if errors.Is(err, errorsPackage.ErrUserExists) {
+			return nil, status.Error(codes.AlreadyExists, errorsPackage.ErrUserExists.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}

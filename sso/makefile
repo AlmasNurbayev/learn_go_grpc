@@ -16,7 +16,7 @@ run:
 	go run cmd/sso/main.go -config=./config/local.yaml
 
 test:
-	go test -v ./tests/...
+	go test -v -count=1 ./tests/...
 
 docker_run:
 	cd ../ && docker-compose up -d --build

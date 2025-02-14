@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sso/internal/errorsPackage"
 	"sso/internal/grpc/middleware"
 	"sso/internal/lib/jwt"
 	"sso/internal/lib/logger"
 	"sso/internal/models"
-	"sso/internal/storage"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -35,11 +35,6 @@ type AppProvider interface {
 	App(ctx context.Context, appId int) (models.App, error)
 }
 
-var (
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrInvalidAppId       = errors.New("invalid app id")
-)
-
 func NewService(log *slog.Logger, storage AuthStorage, tokenTTL time.Duration) *AuthService {
 	return &AuthService{
 		log:      log,
@@ -63,9 +58,9 @@ func (a *AuthService) Login(ctx context.Context, login string,
 	if typeLogin == "email" {
 		user, err = a.storage.GetUserByEmail(ctx, login)
 		if err != nil {
-			if errors.Is(err, storage.ErrUserNotFound) {
+			if errors.Is(err, errorsPackage.ErrUserNotFound) {
 				log.Warn("user not found", slog.String("email", login))
-				return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+				return "", errorsPackage.ErrUserNotFound
 			}
 			log.Error("failed to get user by email", logger.Err(err))
 			return "", fmt.Errorf("%s: %w", op, err)
@@ -76,9 +71,9 @@ func (a *AuthService) Login(ctx context.Context, login string,
 	if typeLogin == "phone" {
 		user, err = a.storage.GetUserByPhone(ctx, login)
 		if err != nil {
-			if errors.Is(err, storage.ErrUserNotFound) {
+			if errors.Is(err, errorsPackage.ErrUserNotFound) {
 				log.Warn("user not found", slog.String("email", login))
-				return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+				return "", errorsPackage.ErrUserNotFound
 			}
 			log.Error("failed to get user by phone", logger.Err(err))
 			return "", fmt.Errorf("%s: %w", op, err)
@@ -88,9 +83,9 @@ func (a *AuthService) Login(ctx context.Context, login string,
 
 	app, err := a.storage.GetAppById(ctx, int(appId))
 	if err != nil {
-		if errors.Is(err, storage.ErrAppNotFound) {
+		if errors.Is(err, errorsPackage.ErrAppNotFound) {
 			log.Warn("app not found", slog.Int("id", appId))
-			return "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
+			return "", errorsPackage.ErrAppNotFound
 		}
 		log.Error("failed to get app", logger.Err(err))
 		return "", fmt.Errorf("%s: %w", op, err)
@@ -98,7 +93,7 @@ func (a *AuthService) Login(ctx context.Context, login string,
 
 	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
 		log.Warn("invalid password", logger.Err(err))
-		return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+		return "", errorsPackage.ErrInvalidCredentials
 	}
 
 	log.Info("user logged in successfully", slog.Int64("id", user.Id))
@@ -130,9 +125,9 @@ func (a *AuthService) RegisterNewUser(ctx context.Context, email string, phone s
 
 	idRole, err := a.storage.GetRoleByName(ctx, "user")
 	if err != nil {
-		if errors.Is(err, storage.ErrRoleNotFound) {
+		if errors.Is(err, errorsPackage.ErrRoleNotFound) {
 			log.Warn("not found role for user")
-			return 0, fmt.Errorf("%s: %w", op, storage.ErrRoleNotFound)
+			return 0, fmt.Errorf("%s: %w", op, errorsPackage.ErrRoleNotFound)
 		}
 		log.Error("failed to save user - not found role", logger.Err(err))
 		return 0, fmt.Errorf("%s: %w", op, err)
@@ -140,9 +135,9 @@ func (a *AuthService) RegisterNewUser(ctx context.Context, email string, phone s
 
 	id, err := a.storage.SaveUser(ctx, email, phone, passwordHash, idRole)
 	if err != nil {
-		if errors.Is(err, storage.ErrUserExists) {
+		if errors.Is(err, errorsPackage.ErrUserExists) {
 			log.Warn("user already exists", slog.String("email", email))
-			return 0, fmt.Errorf("%s: %w", op, storage.ErrUserExists)
+			return 0, errorsPackage.ErrUserExists
 		}
 		log.Error("failed to save user", logger.Err(err))
 		return 0, fmt.Errorf("%s: %w", op, err)
@@ -158,16 +153,15 @@ func (a *AuthService) IsAdmin(ctx context.Context, id int64) (bool, error) {
 
 	isAdmin, err := a.storage.IsAdmin(ctx, id)
 	if err != nil {
-		if errors.Is(err, storage.ErrUserNotFound) {
+		if errors.Is(err, errorsPackage.ErrUserNotFound) {
 			log.Warn("user not found", slog.Int64("id", id))
-			return false, fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
-		} else if errors.Is(err, storage.ErrAppNotFound) {
+			return false, errorsPackage.ErrUserNotFound
+		} else if errors.Is(err, errorsPackage.ErrAppNotFound) {
 			log.Error("failed to get app by id", logger.Err(err))
-			return false, fmt.Errorf("%s: %w", op, ErrInvalidAppId)
+			return false, errorsPackage.ErrAppNotFound
 		} else {
 			log.Error("failed to get user by id", logger.Err(err))
-			return false, fmt.Errorf("%s: %w", op, err)
-
+			return false, errorsPackage.ErrUserNotFound
 		}
 	}
 	log.Info("user checked is admin ", slog.Int64("id ", id), slog.Bool("isAdmin ", isAdmin))

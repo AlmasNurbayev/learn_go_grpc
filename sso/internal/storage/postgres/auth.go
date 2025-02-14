@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sso/internal/errorsPackage"
 	"sso/internal/grpc/middleware"
 	"sso/internal/models"
-	"sso/internal/storage"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -24,7 +24,7 @@ func (s *Storage) SaveUser(ctx context.Context, email string, phone string, pass
 		if pqErr, ok := err.(*pgconn.PgError); ok {
 			if pqErr.Code == "23505" { // Код ошибки уникальности PostgreSQL
 				s.log.Error("user already exists", "error", err)
-				return 0, storage.ErrUserExists
+				return 0, errorsPackage.ErrUserExists
 			}
 		}
 		return 0, err
@@ -37,6 +37,9 @@ func (s *Storage) GetUserByPhone(ctx context.Context, phone string) (user models
 	err = s.db.QueryRowContext(ctx, query, phone).Scan(&user.Id, &user.Email, &user.Phone, &user.PassHash)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return user, errorsPackage.ErrUserNotFound
+		}
 		return user, err
 	}
 	return user, nil
@@ -56,7 +59,7 @@ func (s *Storage) GetUserByEmail(ctx context.Context, email string) (user models
 	err = s.db.QueryRowContext(ctx, query, email).Scan(&user.Id, &user.Email, &user.Phone, &user.PassHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return user, storage.ErrUserNotFound
+			return user, errorsPackage.ErrUserNotFound
 		}
 		return user, err
 	}
@@ -75,7 +78,7 @@ func (s *Storage) GetRoleByName(ctx context.Context, name string) (id int, err e
 	err = s.db.QueryRowContext(ctx, query, name).Scan(&id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, storage.ErrRoleNotFound
+			return 0, errorsPackage.ErrRoleNotFound
 		}
 		return 0, err
 	}
