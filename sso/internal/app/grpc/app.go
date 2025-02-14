@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net"
 	authgrpc "sso/internal/grpc/auth"
-	"sso/internal/grpc/middleware"
+	"sso/internal/grpc/interceptors"
 	"sso/internal/services/auth"
 	"time"
 
@@ -26,7 +26,7 @@ func NewApp(
 	timeout time.Duration,
 
 ) *App {
-	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(middleware.ContextMiddleware(timeout, log)))
+	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(interceptors.ContextMiddleware(timeout, log)))
 	authgrpc.Register(gRPCServer, authService, log)
 
 	return &App{
